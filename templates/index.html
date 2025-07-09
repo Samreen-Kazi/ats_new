@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Automatic Text Summarizer</title>
+
+  <style>
+    /* Reset */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #121212;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin: 20px 0;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      color: #4fc3f7;
+    }
+    nav {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .tab-btn {
+      background: #212121;
+      color: #bbb;
+      border: none;
+      padding: 12px 25px;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 30px;
+      transition: background 0.3s, color 0.3s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .tab-btn:hover {
+      background: #4fc3f7;
+      color: #121212;
+    }
+    .tab-btn.active {
+      background: #0288d1;
+      color: #fff;
+      font-weight: 700;
+      box-shadow: 0 4px 10px #0288d1;
+    }
+
+    /* Tab content containers */
+    .tab-content {
+      width: 90vw;
+      max-width: 900px;
+      background: #1e1e1e;
+      border-radius: 12px;
+      padding: 25px 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+      display: none;
+      margin-bottom: 40px;
+    }
+
+    /* Show the active tab */
+    .tab-content.active {
+      display: block;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #80deea;
+    }
+
+    textarea, input[type="text"], input[type="url"], input[type="file"], select {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 15px;
+      font-size: 16px;
+      resize: vertical;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    textarea {
+      min-height: 140px;
+      background: #121212;
+      color: #eee;
+      border: 1px solid #333;
+    }
+
+    select {
+      background: #212121;
+      color: #eee;
+      border: 1px solid #333;
+    }
+
+    button {
+      background: #4fc3f7;
+      border: none;
+      color: #121212;
+      font-weight: 700;
+      padding: 12px 30px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+      margin-right: 15px;
+      margin-top: 10px;
+      box-shadow: 0 3px 8px rgba(79, 195, 247, 0.7);
+    }
+    button:hover {
+      background: #0288d1;
+      color: white;
+      box-shadow: 0 4px 12px #0288d1;
+    }
+
+    .result-box {
+      background: #121212;
+      padding: 20px;
+      border-radius: 10px;
+      color: #a3d5ff;
+      font-size: 16px;
+      white-space: pre-wrap;
+      min-height: 100px;
+      border: 1px solid #0288d1;
+      margin-top: 15px;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .tab-btn {
+        flex: 1 1 100%;
+        max-width: 100%;
+      }
+      .tab-content {
+        width: 95vw;
+        padding: 15px 20px;
+      }
+    }
+
+    /* Side by side comparer */
+    .compare-container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .compare-box {
+      flex: 1 1 45%;
+      background: #1e1e1e;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid #0288d1;
+      min-height: 180px;
+      white-space: pre-wrap;
+      color: #90caf9;
+      font-size: 15px;
+    }
+    .compare-box h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #4fc3f7;
+      font-weight: 700;
+    }
+
+    .error-msg {
+      color: #ff5555;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Automatic Text Summarizer</h1>
+
+  <nav>
+    <button class="tab-btn" data-tab="home" onclick="showTab('home')">Home</button>
+    <button class="tab-btn" data-tab="url" onclick="showTab('url')">URL Summary</button>
+    <button class="tab-btn" data-tab="file" onclick="showTab('file')">File Upload</button>
+    <button class="tab-btn" data-tab="compare" onclick="showTab('compare')">Compare Summarizers</button>
+  </nav>
+
+  <!-- HOME TAB -->
+  <div id="home" class="tab-content">
+    <form method="POST" action="/summarize">
+      <label for="rawtext">Enter Text to Summarize</label>
+      <textarea id="rawtext" name="rawtext" required>{{ original_text or "" }}</textarea>
+
+      <label for="algo">Choose Summarization Algorithm:</label>
+      <select id="algo" name="algo" required>
+        <option value="spacy" {% if algo=='spacy' %}selected{% endif %}>SpaCy</option>
+        <option value="nltk" {% if algo=='nltk' %}selected{% endif %}>NLTK</option>
+      </select>
+
+      <button type="submit">Summarize</button>
+    </form>
+
+    {% if summary %}
+    <div class="result-box">
+      <strong>Summary:</strong>
+      <br>{{ summary }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+  </div>
+
+  <!-- URL TAB -->
+  <div id="url" class="tab-content">
+    <form method="POST" action="/url_summary">
+      <label for="url">Enter URL to Summarize</label>
+      <input type="url" id="url" name="url" placeholder="https://example.com" required value="{{ url or '' }}">
+
+      <label for="algo_url">Choose Summarization Algorithm:</label>
+      <select id="algo_url" name="algo" required>
+        <option value="spacy" {% if algo=='spacy' %}selected{% endif %}>SpaCy</option>
+        <option value="nltk" {% if algo=='nltk' %}selected{% endif %}>NLTK</option>
+      </select>
+
+      <button type="submit">Summarize URL</button>
+    </form>
+
+    {% if summary %}
+    <div class="result-box">
+      <strong>Summary:</strong>
+      <br>{{ summary }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+  </div>
+
+  <!-- FILE UPLOAD TAB -->
+  <div id="file" class="tab-content">
+    <form method="POST" action="/file_summary" enctype="multipart/form-data">
+      <label for="file">Upload Text File (.txt)</label>
+      <input type="file" id="file" name="file" accept=".txt" required>
+
+      <label for="algo_file">Choose Summarization Algorithm:</label>
+      <select id="algo_file" name="algo" required>
+        <option value="spacy" {% if algo=='spacy' %}selected{% endif %}>SpaCy</option>
+        <option value="nltk" {% if algo=='nltk' %}selected{% endif %}>NLTK</option>
+      </select>
+
+      <button type="submit">Summarize File</button>
+    </form>
+
+    {% if summary %}
+    <div class="result-box">
+      <strong>Summary:</strong>
+      <br>{{ summary }}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+  </div>
+
+  <!-- COMPARE TAB -->
+  <div id="compare" class="tab-content">
+    <form method="POST" action="/compare">
+      <label for="compare_text">Enter Text to Compare Summaries</label>
+      <textarea id="compare_text" name="compare_text" required>{{ compare_text or "" }}</textarea>
+
+      <button type="submit">Compare Summaries</button>
+    </form>
+
+    {% if compare_spacy and compare_nltk %}
+    <div class="compare-container">
+      <div class="compare-box">
+        <h3>SpaCy Summary</h3>
+        {{ compare_spacy }}
+      </div>
+      <div class="compare-box">
+        <h3>NLTK Summary</h3>
+        {{ compare_nltk }}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+  </div>
+
+  <script>
+    // Tab switching JS
+    function showTab(tabId) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      // Show selected tab
+      document.getElementById(tabId).classList.add('active');
+
+      // Update active button
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+    }
+
+    // On page load, show the active tab passed from Flask or default
+    window.onload = function() {
+      const activeTab = "{{ tab or 'home' }}";
+      showTab(activeTab);
+    }
+  </script>
+</body>
+</html>
