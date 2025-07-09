@@ -26,28 +26,6 @@ A modern and interactive web application that summarizes text using NLP techniqu
 
 ---
 
-## Setup Instructions
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/your-username/text-summarizer-web.git
-   cd text-summarizer-web
-
-python3 -m venv venv
-source venv/bin/activate   # On Windows: venv\Scripts\activate
-
-pip install -r requirements.txt
-
-python -m spacy download en_core_web_sm
-
-import nltk
-nltk.download('punkt')
-nltk.download('stopwords')
-
-flask run
-Visit http://127.0.0.1:5000 in your browser.
-
 Usage
 Navigate through tabs: Home, File, URL, Compare.
 
